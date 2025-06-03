@@ -1,70 +1,172 @@
-#Plan
+### 1. Plan and Design
 
-1. Plan and Design
+a. Designing Core Features
 
-- Designing Core features of my app
-- Designing Database schema and relationships
-- API endpoints for frontend-backend communication
+- List all must-have features (already done earlier).
+- Confirm Redis will be used for:
+  - Storing sessions (user login)
+  - Caching cart data (for speed and persistence)
 
-2. Setup Backend Basic Environment
+b. Design Database Schema
 
-- Setup Express Server (server.js & app.js)
-- Setup environment variables with .env and load them in config
-- Connecting backend to database (Sequelize + PostgreSQL)
-- Test Database Connection
+- Use draw\.io or pen-paper to design ERD with tables:
+  - `User`, `Product`, `Cart`, `Order`, `OrderItem`
+- Define fields for each table (e.g., Product → id, name, price, stock).
+- Define relationships:
 
-3. Create Database Models
+  - One user → many orders
+  - One order → many order items
+  - One product → many order items
+  - One user → one cart
 
-- Defining Sequelize models for all tables (User, Product, Cart, Order, OrderItem)
-- Setup model associations (relations) properly
-- Sync models to create/update tables in DB (initial migration or sync)
+c. Plan API Endpoints
 
-4. Build Core Backend API Routes
+- Write down RESTful API routes in `project-plan.md`, e.g.:
+  - `POST /api/auth/register`, `GET /api/products`, `POST /api/cart/add`, etc.
 
-- Defining routes for each major resources (auth, products, cart, orders)
-- Create controllers with placeholder methods for CRUD operations
-- Setup middlewares for input validation and authentication scaffolding
+### 2. Setup Backend Basic Environment
 
-5. Implementing Business Login in Services
+a. Initialize Node Project
 
-- Moving core login from controllers to service (product retrieval, cart management)
-- Handle error cases, validations, and data transformations here
-- Keep controllers clean, only responsible for request/response flow
+- `npm init -y`
+- Install dependencies: `express`, `dotenv`, `sequelize`, `pg`, `redis`, etc.
 
-6. Seed Initial Data
+b. Setup Express Server
 
-- Create seeders to populate database with sample products, users
-- Run seed scripts to have test data ready for frontend integration and testing
+- Create `server.js` → run server.
+- Create `app.js` → set up middleware, routers.
 
-7. Build Frontend Static Pages
+c. Setup `.env` and Config
 
-- Create HTML pages (index.html, login.html, register.html)
-- Create reusable components like navbar and footer
-- Add CSS Styling and static assets (images, icons)
+- Add `.env` with variables like:
+  - `DB_HOST`, `DB_USER`, `DB_PASS`, `PORT`, `REDIS_URL`
+- Create `config/db.config.js`, `redis.config.js`, `session.config.js`
 
-8. Connect Frotend to Backend
+d. Test DB Connection
 
-- Write fontend JS modules to fetch data front backend APIs
-- Handle user actions like login, add to cart, place order
-- User session in frontend to maintain login state
+- Write Sequelize connection code and test it with `sequelize.authenticate()`
 
-9. Implement Authentication
+### 3. Create Database Models
 
-- Build secure login/register backend endpoints with password hashing
-- Implement session authentication middleware in backend
-- Connect frontend login/register to backend authentication API
-- Protect routes that require authentication both frontend and backend
+a. Define Sequelize Models
+
+- Create models: `user.model.js`, `product.model.js`, `cart.model.js`, `order.model.js`, `orderItem.model.js`
+
+b. Setup Associations in `models/index.js`
+
+- `User.hasMany(Order)`
+- `Order.belongsTo(User)`
+- etc.
+
+c. Sync to DB
+
+- Use `sequelize.sync({ alter: true })` to create/update DB tables.
+
+### 4. Build Core Backend API Routes
+
+a. Create Route Files
+
+- `auth.routes.js`, `product.routes.js`, etc.
+- Register them in `index.routes.js`
+
+b. Create Controllers
+
+- Add placeholder methods: e.g., `registerUser`, `getProducts`
+
+c. Setup Middlewares
+
+- Add input validation middleware
+- Auth middleware (can be empty for now)
+
+### 5. Implement Business Logic in Services
+
+a. Create Service Files
+
+- `auth.service.js`, `product.service.js`, etc.
+
+b. Move Logic
+
+- Controllers should just call service methods.
+- Handle logic like: cart updates, product queries, validation, error throwing.
+
+### 6. Seed Initial Data
+
+a. Write Seeder Scripts
+
+- In `seeders/seedProducts.js`, write code to add sample products and users
+
+b. Run Script
+
+- Create a `seed()` function that inserts mock data when run manually.
+
+### 7. Build Frontend Static Pages
+
+a. Create HTML Pages
+
+- `index.html`, `login.html`, `register.html`, `cart.html`, `checkout.html`
+
+b. Create Partial Components
+
+- Move `navbar.html` and `footer.html` to `client/partials/`
+- Optionally create `client/components/productCard.html` for product template
+
+c. Add CSS & Assets
+
+- Setup `style.css`, add images/icons in `assets/images/`
+
+### 8. Connect Frontend to Backend
+
+a. Write Fetch Calls in JS
+
+- `auth.js`: login/register
+- `product.js`: get products from `/api/products`
+- `cart.js`: add/remove items
+
+b. Handle DOM Updates
+
+- Dynamically render products using templates
+- Update cart page on user actions
+
+c. Manage Session State
+
+- Use `sessionStorage` or `cookie` to track login state on frontend
+
+### 9. Implement Authentication
+
+a. Secure Auth Routes
+
+- Hash password with `bcrypt`
+- Store user session in Redis
+
+b. Create Auth Middleware
+
+- Backend: block protected routes if not logged in
+- Frontend: redirect to login if no session
+
+c. Link Frontend ↔ Backend Auth
+
+- Login/register forms send data to backend
+- Display login/logout state on UI
 
 10. Build Cart and Order Features
 
-- Complete backend logic to manage carts (add/remote items)
-- Build order placement logic with payment simulation or integration
-- Connect frontend cart and checkout pages with backend
+a. Cart Logic
 
-11. Testing and Debugging
+- Backend:
 
-- Write backend unit and integration tests
-- Manually test frontend and backend workflows
-- Fix bugs and improve error handling
+  - Add/update/delete items in Redis
 
-12. Deployment Preparation
+- Frontend:
+  - Show cart items
+  - Allow updates (quantity, remove)
+
+b. Order Logic
+
+- Backend:
+
+  - On checkout, convert Redis cart → DB order
+  - Save `Order` and `OrderItems`
+
+- Frontend:
+  - Checkout button sends request
+  - Show order success message
